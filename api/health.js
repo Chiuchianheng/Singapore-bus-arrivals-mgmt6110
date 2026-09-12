@@ -12,7 +12,10 @@ export default async function handler(req, res) {
 
   const accountKey = process.env.LTA_ACCOUNT_KEY;
   const keyConfigured = Boolean(accountKey && accountKey.trim().length > 0);
-  const checkedAt = new Date().toISOString();
+
+  // Format checkedAt in Singapore time (UTC+8) with +08:00 offset
+  const sgtDate = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const checkedAt = sgtDate.toISOString().replace('Z', '+08:00');
 
   if (!keyConfigured) {
     return sendJson(200, {
