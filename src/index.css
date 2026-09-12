@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@keyframes softGreenPulse {
+  0%, 100% {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+  }
+  50% {
+    background-color: #d1fae5;
+    border-color: #6ee7b7;
+  }
+}
+
+.animate-soft-pulse {
+  animation: softGreenPulse 4s ease-in-out infinite;
+}

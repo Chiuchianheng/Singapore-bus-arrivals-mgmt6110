@@ -1,0 +1,6 @@
+{
+  "name": "Singapore Bus Arrivals",
+  "description": "Live bus arrival screen for Singapore commuters with vehicle type, occupancy, and tracking status.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
