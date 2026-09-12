@@ -12,9 +12,11 @@ export default async function handler(req, res) {
 
   const accountKey = process.env.LTA_ACCOUNT_KEY;
   const keyConfigured = Boolean(accountKey && accountKey.trim().length > 0);
+  const checkedAt = new Date().toISOString();
 
   if (!keyConfigured) {
     return sendJson(200, {
+      checkedAt,
       keyConfigured: false,
       upstreamStatus: null,
       upstreamOk: false,
@@ -33,12 +35,14 @@ export default async function handler(req, res) {
     );
 
     return sendJson(200, {
+      checkedAt,
       keyConfigured: true,
       upstreamStatus: upstreamResponse.status,
       upstreamOk: upstreamResponse.ok,
     });
   } catch (error) {
     return sendJson(200, {
+      checkedAt,
       keyConfigured: true,
       upstreamStatus: null,
       upstreamOk: false,

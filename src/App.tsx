@@ -15,6 +15,17 @@ export default function App() {
   const [currentStopCode, setCurrentStopCode] = useState<string>('11149');
   const [stopData, setStopData] = useState<BusStopData | null>(null);
   const [fetchStatus, setFetchStatus] = useState<ArrivalFetchStatus>('loading');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(() => {
+    return (
+      new Date().toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }) + ' SGT'
+    );
+  });
 
   const [savedStops, setSavedStops] = useState<string[]>(() => {
     try {
@@ -38,31 +49,69 @@ export default function App() {
   }, [savedStops]);
 
   // Load arrivals for the active stop code
-  const loadStopArrivals = useCallback(async (code: string) => {
-    const trimmed = code.trim();
-    if (!trimmed) {
-      setFetchStatus('refused');
-      setStopData(null);
-      return;
-    }
+  const loadStopArrivals = useCallback(
+    async (code: string, mode: 'initial' | 'silent' | 'manual' = 'initial') => {
+      const trimmed = code.trim();
+      if (!trimmed) {
+        setFetchStatus('refused');
+        setStopData(null);
+        return;
+      }
 
-    setFetchStatus('loading');
-    setStopData(null);
+      if (mode === 'initial') {
+        setFetchStatus('loading');
+        setStopData(null);
+      } else if (mode === 'manual') {
+        setIsRefreshing(true);
+      }
 
-    const result = await fetchStopArrivals(trimmed);
-    setFetchStatus(result.status);
-    setStopData(result.data);
-  }, []);
+      try {
+        const result = await fetchStopArrivals(trimmed);
+        setFetchStatus(result.status);
+        setStopData(result.data);
+        setLastUpdatedTime(
+          new Date().toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }) + ' SGT'
+        );
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (activeTab === 'stop' && currentStopCode) {
-      loadStopArrivals(currentStopCode);
+      loadStopArrivals(currentStopCode, 'initial');
     }
   }, [currentStopCode, activeTab, loadStopArrivals]);
 
+  // Refresh current stop immediately (manual button click)
+  const handleRefresh = useCallback(() => {
+    if (activeTab === 'stop' && currentStopCode) {
+      loadStopArrivals(currentStopCode, 'manual');
+    }
+    setRefreshTrigger((prev) => prev + 1);
+  }, [activeTab, currentStopCode, loadStopArrivals]);
+
+  // 20-second automatic refresh loop matching LTA's feed interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeTab === 'stop' && currentStopCode) {
+        loadStopArrivals(currentStopCode, 'silent');
+      }
+      setRefreshTrigger((prev) => prev + 1);
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, currentStopCode, loadStopArrivals]);
+
   const handleLoadStop = (code: string) => {
     setCurrentStopCode(code);
-    loadStopArrivals(code);
+    loadStopArrivals(code, 'initial');
   };
 
   const handleAddStop = (code: string) => {
@@ -79,14 +128,18 @@ export default function App() {
   const handleSelectFromMyStops = (code: string) => {
     setCurrentStopCode(code);
     setActiveTab('stop');
-    loadStopArrivals(code);
+    loadStopArrivals(code, 'initial');
   };
 
   const isCurrentStopSaved = savedStops.includes(currentStopCode);
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans antialiased">
-      <Header />
+      <Header
+        onRefresh={handleRefresh}
+        lastUpdatedTime={lastUpdatedTime}
+        isRefreshing={isRefreshing}
+      />
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Top Tab Bar */}
@@ -156,6 +209,7 @@ export default function App() {
             <MyStopsView
               savedStops={savedStops}
               onSelectStop={handleSelectFromMyStops}
+              refreshTrigger={refreshTrigger}
             />
           </div>
         )}

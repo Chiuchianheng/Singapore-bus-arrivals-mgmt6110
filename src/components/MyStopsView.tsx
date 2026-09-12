@@ -10,6 +10,7 @@ import {
 interface MyStopsViewProps {
   savedStops: string[];
   onSelectStop: (stopCode: string) => void;
+  refreshTrigger?: number;
 }
 
 interface ServiceArrivalItem {
@@ -28,6 +29,7 @@ interface SavedStopState {
 export const MyStopsView: React.FC<MyStopsViewProps> = ({
   savedStops,
   onSelectStop,
+  refreshTrigger = 0,
 }) => {
   const [stopsData, setStopsData] = useState<Record<string, SavedStopState>>({});
   const [isLoadingAll, setIsLoadingAll] = useState<boolean>(true);
@@ -40,7 +42,10 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
     }
 
     let isCancelled = false;
-    setIsLoadingAll(true);
+    // Keep showing previous data during periodic auto-refresh, only set full loading if no data yet
+    if (Object.keys(stopsData).length === 0) {
+      setIsLoadingAll(true);
+    }
 
     // Call /api/arrivals once per saved stop
     const fetchPromises = savedStops.map(async (stopCode) => {
@@ -90,7 +95,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [savedStops.join(',')]);
+  }, [savedStops.join(','), refreshTrigger]);
 
   if (savedStops.length === 0) {
     return (
