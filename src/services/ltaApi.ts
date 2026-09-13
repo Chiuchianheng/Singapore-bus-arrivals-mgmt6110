@@ -71,10 +71,14 @@ export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchR
       (res.status >= 400 && res.status < 500);
 
     if (isUpstreamRefusal) {
+      const refusalMessage = errorJson?.upstreamStatus
+        ? STATUS_MESSAGES.refused
+        : (errorJson?.error || errorJson?.reason || STATUS_MESSAGES.refused);
+
       return {
         status: 'refused',
         data: null,
-        errorMessage: STATUS_MESSAGES.refused,
+        errorMessage: refusalMessage,
       };
     }
 

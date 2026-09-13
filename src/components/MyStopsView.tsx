@@ -25,6 +25,7 @@ interface SavedStopState {
   data: BusStopData | null;
   soonestMinutes: number;
   topServices: ServiceArrivalItem[];
+  errorMessage?: string;
 }
 
 export const MyStopsView: React.FC<MyStopsViewProps> = ({
@@ -81,6 +82,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
         data: res.data,
         soonestMinutes,
         topServices,
+        errorMessage: res.errorMessage,
       };
     });
 
@@ -166,7 +168,10 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
         id="my-stops-empty-notice"
         className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-8 text-center text-sm sm:text-base text-slate-600 my-4"
       >
-        {STATUS_MESSAGES.empty}
+        <p>{STATUS_MESSAGES.empty}</p>
+        <p className="text-xs sm:text-sm text-slate-400 mt-2">
+          If this stop code is new to you, check it against the sign at the stop.
+        </p>
       </div>
     );
   }
@@ -185,7 +190,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
 
         {/* Rows */}
         <div className="divide-y divide-slate-100">
-          {rows.map(({ stopCode, status, topServices }) => {
+          {rows.map(({ stopCode, status, topServices, errorMessage }) => {
             const rawLabel = savedLabels[stopCode];
             const label = rawLabel && rawLabel.trim() ? rawLabel.trim() : null;
 
@@ -303,7 +308,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
                     {status === 'loading'
                       ? STATUS_MESSAGES.loading
                       : status === 'refused'
-                      ? STATUS_MESSAGES.refused
+                      ? (errorMessage || STATUS_MESSAGES.refused)
                       : status === 'unreachable'
                       ? STATUS_MESSAGES.unreachable
                       : STATUS_MESSAGES.empty}

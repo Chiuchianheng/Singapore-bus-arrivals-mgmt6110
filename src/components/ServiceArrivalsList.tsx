@@ -8,11 +8,13 @@ interface ServiceArrivalsListProps {
   stopCode: string;
   status: ArrivalFetchStatus;
   stopData: BusStopData | null;
+  errorMessage?: string;
 }
 
 export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
   status,
   stopData,
+  errorMessage,
 }) => {
   if (status === 'loading') {
     return (
@@ -36,6 +38,9 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
         <p className="text-sm sm:text-base font-medium text-slate-600">
           {STATUS_MESSAGES.empty}
         </p>
+        <p className="text-xs sm:text-sm text-slate-400 mt-2">
+          If this stop code is new to you, check it against the sign at the stop.
+        </p>
       </section>
     );
   }
@@ -47,7 +52,7 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
         className="bg-white rounded-2xl p-8 border border-slate-200/90 text-center shadow-xs my-4"
       >
         <p className="text-sm sm:text-base font-medium text-slate-600">
-          {STATUS_MESSAGES.refused}
+          {errorMessage || STATUS_MESSAGES.refused}
         </p>
       </section>
     );
@@ -74,6 +79,9 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
       >
         <p className="text-sm sm:text-base font-medium text-slate-600">
           {STATUS_MESSAGES.empty}
+        </p>
+        <p className="text-xs sm:text-sm text-slate-400 mt-2">
+          If this stop code is new to you, check it against the sign at the stop.
         </p>
       </section>
     );

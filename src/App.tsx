@@ -17,6 +17,7 @@ export default function App() {
   const [currentStopCode, setCurrentStopCode] = useState<string>('11149');
   const [stopData, setStopData] = useState<BusStopData | null>(null);
   const [fetchStatus, setFetchStatus] = useState<ArrivalFetchStatus>('loading');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(() => {
@@ -89,12 +90,14 @@ export default function App() {
       if (!trimmed) {
         setFetchStatus('refused');
         setStopData(null);
+        setErrorMessage('Stop codes are five digits.');
         return;
       }
 
       if (mode === 'initial') {
         setFetchStatus('loading');
         setStopData(null);
+        setErrorMessage('');
       } else if (mode === 'manual') {
         setIsRefreshing(true);
       }
@@ -103,6 +106,7 @@ export default function App() {
         const result = await fetchStopArrivals(trimmed);
         setFetchStatus(result.status);
         setStopData(result.data);
+        setErrorMessage(result.errorMessage || '');
         setLastUpdatedTime(
           new Date().toLocaleTimeString('en-GB', {
             hour: '2-digit',
@@ -282,6 +286,7 @@ export default function App() {
               stopCode={currentStopCode}
               status={fetchStatus}
               stopData={stopData}
+              errorMessage={errorMessage}
             />
           </div>
         ) : (

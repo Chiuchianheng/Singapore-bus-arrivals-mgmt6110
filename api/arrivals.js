@@ -10,16 +10,7 @@ export default async function handler(req, res) {
     res.end(JSON.stringify(data));
   };
 
-  // 1. Guard against missing or empty credential BEFORE making any fetch
-  const accountKey = process.env.LTA_ACCOUNT_KEY;
-  if (!accountKey || accountKey.trim() === '') {
-    return sendJson(503, {
-      error: 'LTA_ACCOUNT_KEY environment variable is not configured',
-      variable: 'LTA_ACCOUNT_KEY',
-    });
-  }
-
-  // 2. Parse BusStopCode query parameter
+  // 1. Parse BusStopCode query parameter
   let busStopCode = '';
   if (req.query && (req.query.BusStopCode || req.query.busStopCode)) {
     busStopCode = String(req.query.BusStopCode || req.query.busStopCode).trim();
@@ -36,9 +27,20 @@ export default async function handler(req, res) {
     }
   }
 
-  if (!busStopCode) {
+  // 2. Format check before fetch: a stop code must be exactly five digits. Anything else returns 400 with a reason.
+  if (!/^\d{5}$/.test(busStopCode)) {
     return sendJson(400, {
-      error: 'BusStopCode query parameter is required',
+      error: 'Stop codes are five digits.',
+      reason: 'Stop codes are five digits.',
+    });
+  }
+
+  // 3. Guard against missing or empty credential BEFORE making any fetch
+  const accountKey = process.env.LTA_ACCOUNT_KEY;
+  if (!accountKey || accountKey.trim() === '') {
+    return sendJson(503, {
+      error: 'LTA_ACCOUNT_KEY environment variable is not configured',
+      variable: 'LTA_ACCOUNT_KEY',
     });
   }
 
