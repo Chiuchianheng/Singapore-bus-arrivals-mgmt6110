@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const upstreamUrl = `https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival?BusStopCode=${encodeURIComponent(busStopCode)}`;
+  const upstreamUrl = `https://datamall2.mytransport.sgX/ltaodataservice/v3/BusArrival?BusStopCode=${encodeURIComponent(busStopCode)}`;
 
   try {
     const response = await fetch(upstreamUrl, {
