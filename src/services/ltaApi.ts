@@ -57,8 +57,20 @@ export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchR
       };
     }
 
-    // Upstream refusal (e.g. 400 bad request, 403 forbidden, 404 not found)
-    if (res.status === 400 || res.status === 403 || res.status === 404) {
+    // When upstream returns a non-2xx status (including 401, 404, etc.), LTA answered and refused the request.
+    // Only a genuine network failure where no response comes back at all shows "Cannot reach LTA right now."
+    let errorJson: any = null;
+    try {
+      errorJson = await res.json();
+    } catch {
+      // ignore
+    }
+
+    const isUpstreamRefusal =
+      Boolean(errorJson?.upstreamStatus) ||
+      (res.status >= 400 && res.status < 500);
+
+    if (isUpstreamRefusal) {
       return {
         status: 'refused',
         data: null,
@@ -66,14 +78,14 @@ export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchR
       };
     }
 
-    // 502 bad gateway, 503 service unavailable, 504 gateway timeout, etc.
+    // Genuine network failure where upstream didn't respond
     return {
       status: 'unreachable',
       data: null,
       errorMessage: STATUS_MESSAGES.unreachable,
     };
   } catch (err) {
-    // Network / fetch unreachable
+    // Genuine network failure / fetch threw
     return {
       status: 'unreachable',
       data: null,

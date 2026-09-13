@@ -9,6 +9,7 @@ import {
 
 interface MyStopsViewProps {
   savedStops: string[];
+  savedLabels?: Record<string, string>;
   onSelectStop: (stopCode: string) => void;
   refreshTrigger?: number;
 }
@@ -28,6 +29,7 @@ interface SavedStopState {
 
 export const MyStopsView: React.FC<MyStopsViewProps> = ({
   savedStops,
+  savedLabels = {},
   onSelectStop,
   refreshTrigger = 0,
 }) => {
@@ -176,7 +178,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
     <div className="my-4">
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[72px_1fr] sm:grid-cols-[88px_1fr] items-center px-3.5 sm:px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-400 uppercase tracking-wider gap-3 sm:gap-4">
+        <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[110px_1fr] items-center px-3.5 sm:px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-400 uppercase tracking-wider gap-3 sm:gap-4">
           <div>STOP</div>
           <div>NEXT 3 SERVICES</div>
         </div>
@@ -184,6 +186,9 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
         {/* Rows */}
         <div className="divide-y divide-slate-100">
           {rows.map(({ stopCode, status, topServices }) => {
+            const rawLabel = savedLabels[stopCode];
+            const label = rawLabel && rawLabel.trim() ? rawLabel.trim() : null;
+
             return (
               <div
                 key={stopCode}
@@ -197,17 +202,33 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
                     onSelectStop(stopCode);
                   }
                 }}
-                className="grid grid-cols-[72px_1fr] sm:grid-cols-[88px_1fr] items-center px-3.5 sm:px-4 py-3 gap-3 sm:gap-4 cursor-pointer transition-colors hover:bg-slate-50/80 active:bg-slate-100 focus:outline-hidden focus-visible:bg-slate-50"
+                className="grid grid-cols-[80px_1fr] sm:grid-cols-[110px_1fr] items-center px-3.5 sm:px-4 py-3 gap-3 sm:gap-4 cursor-pointer transition-colors hover:bg-slate-50/80 active:bg-slate-100 focus:outline-hidden focus-visible:bg-slate-50"
               >
-                {/* Left: Stop code */}
+                {/* Left: Stop label + code */}
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider sm:hidden">
-                    Stop
-                  </div>
-                  <div className="text-sm sm:text-base font-bold text-slate-800 leading-tight truncate">
-                    <span className="hidden sm:inline">Stop </span>
-                    {stopCode}
-                  </div>
+                  {label ? (
+                    <>
+                      <div
+                        className="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate"
+                        title={label}
+                      >
+                        {label}
+                      </div>
+                      <div className="text-[11px] sm:text-xs font-medium text-slate-500 leading-tight truncate mt-0.5">
+                        Stop {stopCode}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider sm:hidden">
+                        Stop
+                      </div>
+                      <div className="text-sm sm:text-base font-bold text-slate-800 leading-tight truncate">
+                        <span className="hidden sm:inline">Stop </span>
+                        {stopCode}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Right: Next 3 services side by side OR status sentence */}

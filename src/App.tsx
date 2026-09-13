@@ -4,11 +4,13 @@ import { StopSearch } from './components/StopSearch';
 import { SavedStops } from './components/SavedStops';
 import { ServiceArrivalsList } from './components/ServiceArrivalsList';
 import { MyStopsView } from './components/MyStopsView';
+import { StopLabelModal } from './components/StopLabelModal';
 import { Footer } from './components/Footer';
 import { BusStopData } from './types';
 import { fetchStopArrivals, ArrivalFetchStatus } from './services/ltaApi';
 
 const STORAGE_KEY = 'sg_commuter_saved_stops';
+const LABELS_STORAGE_KEY = 'sg_commuter_saved_stop_labels';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'stop' | 'my-stops'>('stop');
@@ -40,6 +42,30 @@ export default function App() {
     return ['11149', '04121'];
   });
 
+  const [savedLabels, setSavedLabels] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem(LABELS_STORAGE_KEY);
+      if (stored !== null) {
+        return JSON.parse(stored);
+      }
+    } catch {
+      // Fallback if localStorage read fails
+    }
+    return {};
+  });
+
+  const [labelModal, setLabelModal] = useState<{
+    isOpen: boolean;
+    stopCode: string;
+    isEditing: boolean;
+    initialLabel: string;
+  }>({
+    isOpen: false,
+    stopCode: '',
+    isEditing: false,
+    initialLabel: '',
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedStops));
@@ -47,6 +73,14 @@ export default function App() {
       // Ignore write errors (e.g. private browsing restrictions)
     }
   }, [savedStops]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LABELS_STORAGE_KEY, JSON.stringify(savedLabels));
+    } catch {
+      // Ignore write errors
+    }
+  }, [savedLabels]);
 
   // Load arrivals for the active stop code
   const loadStopArrivals = useCallback(
@@ -114,15 +148,59 @@ export default function App() {
     loadStopArrivals(code, 'initial');
   };
 
-  const handleAddStop = (code: string) => {
+  const handlePromptAddStop = (code: string) => {
     if (!code) return;
+    setLabelModal({
+      isOpen: true,
+      stopCode: code,
+      isEditing: false,
+      initialLabel: savedLabels[code] || '',
+    });
+  };
+
+  const handlePromptEditLabel = (code: string) => {
+    if (!code) return;
+    setLabelModal({
+      isOpen: true,
+      stopCode: code,
+      isEditing: true,
+      initialLabel: savedLabels[code] || '',
+    });
+  };
+
+  const handleSaveLabelModal = (label: string) => {
+    const code = labelModal.stopCode;
+    if (!code) return;
+    const trimmed = label.trim();
+
     if (!savedStops.includes(code)) {
       setSavedStops((prev) => [...prev, code]);
     }
+
+    setSavedLabels((prev) => {
+      const next = { ...prev };
+      if (trimmed) {
+        next[code] = trimmed;
+      } else {
+        delete next[code];
+      }
+      return next;
+    });
+
+    setLabelModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleCloseLabelModal = () => {
+    setLabelModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const handleRemoveStop = (code: string) => {
     setSavedStops((prev) => prev.filter((s) => s !== code));
+    setSavedLabels((prev) => {
+      const next = { ...prev };
+      delete next[code];
+      return next;
+    });
   };
 
   const handleSelectFromMyStops = (code: string) => {
@@ -186,15 +264,18 @@ export default function App() {
             <StopSearch
               currentStopCode={currentStopCode}
               onLoadStop={handleLoadStop}
-              onAddCurrentStop={handleAddStop}
+              onAddCurrentStop={handlePromptAddStop}
+              onEditCurrentStopLabel={handlePromptEditLabel}
               isCurrentStopSaved={isCurrentStopSaved}
             />
 
             <SavedStops
               savedStops={savedStops}
+              savedLabels={savedLabels}
               activeStopCode={currentStopCode}
               onSelectStop={handleLoadStop}
               onRemoveStop={handleRemoveStop}
+              onEditLabel={handlePromptEditLabel}
             />
 
             <ServiceArrivalsList
@@ -208,6 +289,7 @@ export default function App() {
           <div id="tabpanel-my-stops" role="tabpanel" aria-labelledby="tab-my-stops">
             <MyStopsView
               savedStops={savedStops}
+              savedLabels={savedLabels}
               onSelectStop={handleSelectFromMyStops}
               refreshTrigger={refreshTrigger}
             />
@@ -216,6 +298,15 @@ export default function App() {
 
         <Footer />
       </main>
+
+      <StopLabelModal
+        isOpen={labelModal.isOpen}
+        stopCode={labelModal.stopCode}
+        isEditing={labelModal.isEditing}
+        initialLabel={labelModal.initialLabel}
+        onSave={handleSaveLabelModal}
+        onClose={handleCloseLabelModal}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ interface StopSearchProps {
   currentStopCode: string;
   onLoadStop: (code: string) => void;
   onAddCurrentStop: (code: string) => void;
+  onEditCurrentStopLabel?: (code: string) => void;
   isCurrentStopSaved: boolean;
 }
 
@@ -12,6 +13,7 @@ export const StopSearch: React.FC<StopSearchProps> = ({
   currentStopCode,
   onLoadStop,
   onAddCurrentStop,
+  onEditCurrentStopLabel,
   isCurrentStopSaved,
 }) => {
   const [inputVal, setInputVal] = useState(currentStopCode);
@@ -25,7 +27,11 @@ export const StopSearch: React.FC<StopSearchProps> = ({
 
   const handleAddStop = () => {
     if (currentStopCode.trim()) {
-      onAddCurrentStop(currentStopCode.trim());
+      if (isCurrentStopSaved) {
+        onEditCurrentStopLabel?.(currentStopCode.trim());
+      } else {
+        onAddCurrentStop(currentStopCode.trim());
+      }
     }
   };
 
@@ -65,13 +71,13 @@ export const StopSearch: React.FC<StopSearchProps> = ({
             id="add-stop-button"
             type="button"
             onClick={handleAddStop}
-            disabled={!currentStopCode || isCurrentStopSaved}
+            disabled={!currentStopCode}
             className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer ${
               isCurrentStopSaved
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
                 : 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-200'
             }`}
-            title={isCurrentStopSaved ? 'Stop already saved' : 'Add current stop to saved stops'}
+            title={isCurrentStopSaved ? 'Saved (click to edit label)' : 'Add current stop to saved stops'}
           >
             {isCurrentStopSaved ? (
               <>
