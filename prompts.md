@@ -339,3 +339,11 @@ There's one thing I'm leaving alone for now. That hint line listing the three st
 **What came back:** The chip shows the label on top with the stop code underneath, plus a pencil to edit and a cross to remove.
 
 **What I changed next and why:** Nothing. The product does what I set out to build.
+
+---
+
+## Where I stopped prompting and did it by hand
+
+A fair bit of this weekend never went near the agent.
+Before I wrote Week 2's Prompt 1, the back-end master prompt, I sat in a terminal and called LTA myself with curl. That's where the five traps came from: the empty shell where a second bus should be, the clock times that aren't minutes, the three-letter occupancy codes, the untracked bus reporting itself at 0.0, and the list sorted by service number as text so 51 lands after 195. None of that would have turned up in a prompt. I read it off the screen and pasted the whole reply into the prompt so the agent wasn't guessing at field names.
+Setting the key in Vercel took about forty seconds. Explaining that to an agent and reading back whatever it said would have taken longer than just doing it. Same with swapping the key for WRONG when I wanted to see the refusal state, and putting it back afterwards, and pressing Redeploy each time. Pushing to GitHub and watching the build was the same story. Faster to do than to ask about. And all the testing was mine. Typing 11149 at ten at night and again at two in the morning. Typing 00000 to see what a fake code does. Typing 111 to check the format rule. Opening `/api/health` and reading it. Taking a screenshot each time so I'd have something to point at later.
