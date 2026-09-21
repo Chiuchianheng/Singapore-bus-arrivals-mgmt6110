@@ -5,6 +5,7 @@ import { SavedStops } from './components/SavedStops';
 import { ServiceArrivalsList } from './components/ServiceArrivalsList';
 import { MyStopsView } from './components/MyStopsView';
 import { StopLabelModal } from './components/StopLabelModal';
+import { DisqusComments } from './components/DisqusComments';
 import { Footer } from './components/Footer';
 import { BusStopData } from './types';
 import { fetchStopArrivals, ArrivalFetchStatus } from './services/ltaApi';
@@ -300,6 +301,8 @@ export default function App() {
             />
           </div>
         )}
+
+        <DisqusComments currentView={activeTab} />
 
         <Footer />
       </main>
