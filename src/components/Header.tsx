@@ -3,14 +3,18 @@ import { Bus, Clock, RotateCw, Activity } from 'lucide-react';
 
 interface HeaderProps {
   onRefresh?: () => void;
+  onStatusCheck?: () => void;
   lastUpdatedTime?: string;
   isRefreshing?: boolean;
+  isCheckingStatus?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onRefresh,
+  onStatusCheck,
   lastUpdatedTime,
   isRefreshing = false,
+  isCheckingStatus = false,
 }) => {
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur-sm sticky top-0 z-20 px-4 py-3 sm:px-6 shadow-xs">
@@ -43,16 +47,16 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Refresh</span>
           </button>
 
-          <a
-            href="/api/health"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             id="header-status-check-btn"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200/80 transition-colors cursor-pointer"
+            onClick={onStatusCheck}
+            disabled={isCheckingStatus}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200/80 transition-colors cursor-pointer disabled:opacity-60"
           >
-            <Activity className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-            <span>Status check</span>
-          </a>
+            <Activity className={`w-3.5 h-3.5 text-slate-500 ${isCheckingStatus ? 'animate-pulse' : ''}`} aria-hidden="true" />
+            <span>{isCheckingStatus ? 'Checking...' : 'Status check'}</span>
+          </button>
 
           {lastUpdatedTime && (
             <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200/60">

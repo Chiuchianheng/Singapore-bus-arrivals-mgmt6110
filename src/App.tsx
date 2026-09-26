@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { X, CheckCircle, AlertTriangle, WifiOff } from 'lucide-react';
 import { Header } from './components/Header';
 import { StopSearch } from './components/StopSearch';
 import { SavedStops } from './components/SavedStops';
@@ -21,6 +22,11 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  const [systemStatus, setSystemStatus] = useState<{
+    type: 'success' | 'warning' | 'error';
+    message: string;
+  } | null>(null);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(() => {
     return (
       new Date().toLocaleTimeString('en-GB', {
@@ -150,6 +156,74 @@ export default function App() {
     }
     setRefreshTrigger((prev) => prev + 1);
   }, [activeTab, currentStopCode, loadStopArrivals]);
+
+  const formatCheckedTime = (checkedAt?: string): string => {
+    if (checkedAt) {
+      const match = checkedAt.match(/T(\d{2}):(\d{2})/);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        const m = match[2];
+        const ampm = h >= 12 ? 'pm' : 'am';
+        h = h % 12 || 12;
+        return `${h}:${m} ${ampm}`;
+      }
+      try {
+        const d = new Date(checkedAt);
+        return d
+          .toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })
+          .toLowerCase();
+      } catch {
+        // Fall back below
+      }
+    }
+    return new Date()
+      .toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      })
+      .toLowerCase();
+  };
+
+  const handleCheckStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      const res = await fetch('/api/health');
+      if (!res.ok) {
+        setSystemStatus({
+          type: 'warning',
+          message:
+            "LTA's live bus data is not responding right now. Arrival times may be missing or out of date.",
+        });
+        return;
+      }
+      const data = await res.json();
+      if (data && data.upstreamOk === true) {
+        const timeStr = formatCheckedTime(data.checkedAt);
+        setSystemStatus({
+          type: 'success',
+          message: `Live bus times are working. Last checked ${timeStr}.`,
+        });
+      } else {
+        setSystemStatus({
+          type: 'warning',
+          message:
+            "LTA's live bus data is not responding right now. Arrival times may be missing or out of date.",
+        });
+      }
+    } catch {
+      setSystemStatus({
+        type: 'error',
+        message: 'Could not check. Your device may be offline.',
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
 
   // 20-second automatic refresh loop matching LTA's feed interval
   useEffect(() => {
@@ -285,9 +359,54 @@ export default function App() {
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans antialiased">
       <Header
         onRefresh={handleRefresh}
+        onStatusCheck={handleCheckStatus}
         lastUpdatedTime={lastUpdatedTime}
         isRefreshing={isRefreshing}
+        isCheckingStatus={isCheckingStatus}
       />
+
+      {/* System Status Message below Header */}
+      {systemStatus && (
+        <div
+          id="system-status-notice"
+          className="bg-white border-b border-slate-200/90 shadow-2xs"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="max-w-2xl mx-auto px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {systemStatus.type === 'success' && (
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+              )}
+              {systemStatus.type === 'warning' && (
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
+              )}
+              {systemStatus.type === 'error' && (
+                <WifiOff className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
+              )}
+              <p
+                className={`text-xs sm:text-sm font-medium ${
+                  systemStatus.type === 'success'
+                    ? 'text-slate-800'
+                    : systemStatus.type === 'warning'
+                    ? 'text-amber-900'
+                    : 'text-slate-700'
+                }`}
+              >
+                {systemStatus.message}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSystemStatus(null)}
+              className="text-slate-400 hover:text-slate-600 p-1 -mr-1 rounded-md transition-colors cursor-pointer shrink-0"
+              aria-label="Close status message"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Top Tab Bar */}
