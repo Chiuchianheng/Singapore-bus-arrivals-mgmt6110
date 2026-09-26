@@ -213,13 +213,50 @@ export default function App() {
     setLabelModal((prev) => ({ ...prev, isOpen: false }));
   };
 
+  const [recentlyRemoved, setRecentlyRemoved] = useState<{
+    code: string;
+    label?: string;
+    index: number;
+  } | null>(null);
+
   const handleRemoveStop = (code: string) => {
+    const index = savedStops.indexOf(code);
+    const label = savedLabels[code];
+
     setSavedStops((prev) => prev.filter((s) => s !== code));
     setSavedLabels((prev) => {
       const next = { ...prev };
       delete next[code];
       return next;
     });
+
+    setRecentlyRemoved({
+      code,
+      label,
+      index: index >= 0 ? index : 0,
+    });
+  };
+
+  const handleUndoRemoveStop = () => {
+    if (!recentlyRemoved) return;
+    const { code, label, index } = recentlyRemoved;
+
+    setSavedStops((prev) => {
+      if (prev.includes(code)) return prev;
+      const next = [...prev];
+      const targetIndex = Math.min(Math.max(0, index), next.length);
+      next.splice(targetIndex, 0, code);
+      return next;
+    });
+
+    if (label) {
+      setSavedLabels((prev) => ({
+        ...prev,
+        [code]: label,
+      }));
+    }
+
+    setRecentlyRemoved(null);
   };
 
   const handleSelectFromMyStops = (code: string) => {
@@ -297,6 +334,8 @@ export default function App() {
               onSelectStop={handleLoadStop}
               onRemoveStop={handleRemoveStop}
               onEditLabel={handlePromptEditLabel}
+              recentlyRemoved={recentlyRemoved}
+              onUndo={handleUndoRemoveStop}
             />
 
             <ServiceArrivalsList
