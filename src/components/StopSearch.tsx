@@ -5,18 +5,19 @@ import { fetchBusStops } from '../services/ltaApi';
 
 interface StopSearchProps {
   currentStopCode: string;
+  savedStops: string[];
   onLoadStop: (code: string) => void;
   onAddCurrentStop: (code: string) => void;
   onEditCurrentStopLabel?: (code: string) => void;
-  isCurrentStopSaved: boolean;
+  isCurrentStopSaved?: boolean;
 }
 
 export const StopSearch: React.FC<StopSearchProps> = ({
   currentStopCode,
+  savedStops = [],
   onLoadStop,
   onAddCurrentStop,
   onEditCurrentStopLabel,
-  isCurrentStopSaved,
 }) => {
   const [inputVal, setInputVal] = useState(currentStopCode);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,20 +43,30 @@ export const StopSearch: React.FC<StopSearchProps> = ({
     });
   }, []);
 
+  const trimmedInput = inputVal.trim();
+  const isFiveDigits = /^\d{5}$/.test(trimmedInput);
+  const isBoxCodeSaved = isFiveDigits && savedStops.includes(trimmedInput);
+  const showFormatError = trimmedInput.length > 0 && !isFiveDigits;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputVal.trim()) {
-      onLoadStop(inputVal.trim());
+    if (!isFiveDigits) {
+      return;
     }
+    onLoadStop(trimmedInput);
   };
 
   const handleAddStop = () => {
-    if (currentStopCode.trim()) {
-      if (isCurrentStopSaved) {
-        onEditCurrentStopLabel?.(currentStopCode.trim());
-      } else {
-        onAddCurrentStop(currentStopCode.trim());
-      }
+    if (!isFiveDigits) return;
+
+    if (trimmedInput !== currentStopCode) {
+      onLoadStop(trimmedInput);
+    }
+
+    if (savedStops.includes(trimmedInput)) {
+      onEditCurrentStopLabel?.(trimmedInput);
+    } else {
+      onAddCurrentStop(trimmedInput);
     }
   };
 
@@ -111,15 +122,21 @@ export const StopSearch: React.FC<StopSearchProps> = ({
             id="add-stop-button"
             type="button"
             onClick={handleAddStop}
-            disabled={!currentStopCode}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer ${
-              isCurrentStopSaved
+            disabled={!isFiveDigits}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+              isBoxCodeSaved
                 ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
                 : 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-200'
             }`}
-            title={isCurrentStopSaved ? 'Saved (click to edit label)' : 'Add current stop to saved stops'}
+            title={
+              !isFiveDigits
+                ? 'Stop codes are five digits.'
+                : isBoxCodeSaved
+                ? 'Saved (click to edit label)'
+                : 'Add current stop to saved stops'
+            }
           >
-            {isCurrentStopSaved ? (
+            {isBoxCodeSaved ? (
               <>
                 <Check className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                 <span>Saved</span>
@@ -133,6 +150,12 @@ export const StopSearch: React.FC<StopSearchProps> = ({
           </button>
         </div>
       </form>
+
+      {showFormatError && (
+        <p id="stop-code-format-error" className="mt-2 text-xs sm:text-sm text-red-600 font-medium">
+          Stop codes are five digits.
+        </p>
+      )}
 
       {/* Second Box: Search by bus stop name or road name */}
       <div className="mt-4 pt-3.5 border-t border-slate-100">

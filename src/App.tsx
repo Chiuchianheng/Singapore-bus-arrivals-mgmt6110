@@ -149,8 +149,15 @@ export default function App() {
   }, [activeTab, currentStopCode, loadStopArrivals]);
 
   const handleLoadStop = (code: string) => {
-    setCurrentStopCode(code);
-    loadStopArrivals(code, 'initial');
+    const trimmed = code.trim();
+    if (!/^\d{5}$/.test(trimmed)) {
+      setFetchStatus('refused');
+      setStopData(null);
+      setErrorMessage('Stop codes are five digits.');
+      return;
+    }
+    setCurrentStopCode(trimmed);
+    loadStopArrivals(trimmed, 'initial');
   };
 
   const handlePromptAddStop = (code: string) => {
@@ -268,6 +275,7 @@ export default function App() {
           <div id="tabpanel-stop" role="tabpanel" aria-labelledby="tab-stop">
             <StopSearch
               currentStopCode={currentStopCode}
+              savedStops={savedStops}
               onLoadStop={handleLoadStop}
               onAddCurrentStop={handlePromptAddStop}
               onEditCurrentStopLabel={handlePromptEditLabel}
