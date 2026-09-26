@@ -24,14 +24,17 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
   const renderLoadedStopHeader = () => (
     <div
       id="loaded-stop-header"
-      className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 mb-4"
+      className="bg-slate-50/90 border-b border-slate-200 px-4 py-3 sm:px-5 sm:py-3.5"
     >
+      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+        Buses at
+      </div>
       {label ? (
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
             {label}
           </h2>
-          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">
             {stopRecord ? (
               <>
                 <span>{stopRecord.Description}</span>
@@ -47,11 +50,11 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
         </div>
       ) : (
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
             {stopRecord ? stopRecord.Description : `Stop ${stopCode}`}
           </h2>
           {stopRecord && (
-            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">
               <span>{stopRecord.RoadName}</span>
               <span className="mx-1.5 text-slate-300">·</span>
               <span>Stop {stopCode}</span>
@@ -91,17 +94,19 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
   if (status === 'empty') {
     return (
       <section className="my-4">
-        {renderLoadedStopHeader()}
-        <div
-          id="status-notice-empty"
-          className="bg-white rounded-2xl p-8 border border-slate-200/90 text-center shadow-xs"
-        >
-          <p className="text-sm sm:text-base font-medium text-slate-600">
-            {STATUS_MESSAGES.empty}
-          </p>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2">
-            If this stop code is new to you, check it against the sign at the stop.
-          </p>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+          {renderLoadedStopHeader()}
+          <div
+            id="status-notice-empty"
+            className="p-8 text-center"
+          >
+            <p className="text-sm sm:text-base font-medium text-slate-600">
+              {STATUS_MESSAGES.empty}
+            </p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2">
+              If this stop code is new to you, check it against the sign at the stop.
+            </p>
+          </div>
         </div>
       </section>
     );
@@ -136,17 +141,19 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
   if (!stopData || !stopData.services || stopData.services.length === 0) {
     return (
       <section className="my-4">
-        {renderLoadedStopHeader()}
-        <div
-          id="status-notice-empty-fallback"
-          className="bg-white rounded-2xl p-8 border border-slate-200/90 text-center shadow-xs"
-        >
-          <p className="text-sm sm:text-base font-medium text-slate-600">
-            {STATUS_MESSAGES.empty}
-          </p>
-          <p className="text-xs sm:text-sm text-slate-400 mt-2">
-            If this stop code is new to you, check it against the sign at the stop.
-          </p>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+          {renderLoadedStopHeader()}
+          <div
+            id="status-notice-empty-fallback"
+            className="p-8 text-center"
+          >
+            <p className="text-sm sm:text-base font-medium text-slate-600">
+              {STATUS_MESSAGES.empty}
+            </p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2">
+              If this stop code is new to you, check it against the sign at the stop.
+            </p>
+          </div>
         </div>
       </section>
     );
@@ -162,14 +169,13 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
 
   return (
     <section className="my-4">
-      {/* Loaded Stop Header */}
-      {renderLoadedStopHeader()}
-
-      {/* Incoming Buses Banner */}
-      <IncomingBusesBanner services={sortedServices} />
-
-      {/* Table Container */}
+      {/* Arrivals Card with Stop Header at the top */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        {renderLoadedStopHeader()}
+
+        {/* Incoming Buses Banner embedded inside card */}
+        <IncomingBusesBanner services={sortedServices} embedded />
+
         {/* Table Header Row */}
         <div className="grid grid-cols-[1fr_88px_116px] sm:grid-cols-[1fr_100px_130px] items-center px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
           <div>BUS SERVICE</div>

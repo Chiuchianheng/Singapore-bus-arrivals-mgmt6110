@@ -3,11 +3,21 @@ import { BusService } from '../types';
 
 interface IncomingBusesBannerProps {
   services: BusService[];
+  embedded?: boolean;
 }
 
-export const IncomingBusesBanner: React.FC<IncomingBusesBannerProps> = ({ services }) => {
+export const IncomingBusesBanner: React.FC<IncomingBusesBannerProps> = ({
+  services,
+  embedded = false,
+}) => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 sm:p-4 mb-4">
+    <div
+      className={
+        embedded
+          ? 'p-3.5 sm:p-4 border-b border-slate-200 bg-white'
+          : 'bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 sm:p-4 mb-4'
+      }
+    >
       {/* Label and Note */}
       <div className="flex flex-wrap items-baseline gap-2 mb-3">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-500">

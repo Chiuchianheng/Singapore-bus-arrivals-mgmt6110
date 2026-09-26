@@ -41,9 +41,14 @@ export const SavedStops: React.FC<SavedStopsProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [confirmStop]);
 
+  const removedRecord = recentlyRemoved ? stopsCatalog[recentlyRemoved.code] : null;
+  const removedName = removedRecord?.Description?.trim();
+
   const undoButtonText = recentlyRemoved
     ? recentlyRemoved.label && recentlyRemoved.label.trim()
       ? `Undo remove ${recentlyRemoved.label.trim()} (Stop ${recentlyRemoved.code})`
+      : removedName
+      ? `Undo remove ${removedName} (Stop ${recentlyRemoved.code})`
       : `Undo remove Stop ${recentlyRemoved.code}`
     : '';
 
@@ -183,6 +188,8 @@ export const SavedStops: React.FC<SavedStopsProps> = ({
             >
               {confirmStop.label
                 ? `Remove ${confirmStop.label} (Stop ${confirmStop.code}) from your saved stops?`
+                : stopsCatalog[confirmStop.code]?.Description
+                ? `Remove ${stopsCatalog[confirmStop.code].Description.trim()} (Stop ${confirmStop.code}) from your saved stops?`
                 : `Remove Stop ${confirmStop.code} from your saved stops?`}
             </h3>
             <div className="flex gap-2.5 justify-end mt-5">
