@@ -1,6 +1,6 @@
 import { BusStopData, BusStopRecord } from '../types';
 
-export type ArrivalFetchStatus = 'loading' | 'empty' | 'refused' | 'unreachable' | 'success';
+export type ArrivalFetchStatus = 'loading' | 'empty' | 'refused' | 'unreachable' | 'success' | 'not_found';
 
 export interface ArrivalFetchResult {
   status: ArrivalFetchStatus;
@@ -13,6 +13,7 @@ export const STATUS_MESSAGES = {
   empty: 'No buses are running from this stop right now.',
   refused: 'LTA refused the request. Check the stop code.',
   unreachable: 'Cannot reach LTA right now.',
+  not_found: 'This stop does not exist. Please check the code on the bus stop pole.',
 } as const;
 
 export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchResult> {
@@ -64,6 +65,14 @@ export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchR
       errorJson = await res.json();
     } catch {
       // ignore
+    }
+
+    if (res.status === 404 && errorJson?.error === 'StopNotFound') {
+      return {
+        status: 'not_found',
+        data: null,
+        errorMessage: STATUS_MESSAGES.not_found,
+      };
     }
 
     const isUpstreamRefusal =

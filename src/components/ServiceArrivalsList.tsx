@@ -29,6 +29,19 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
     );
   }
 
+  if (status === 'not_found') {
+    return (
+      <section
+        id="status-notice-not-found"
+        className="bg-white rounded-2xl p-8 border border-slate-200/90 text-center shadow-xs my-4"
+      >
+        <p className="text-sm sm:text-base font-medium text-slate-600">
+          This stop does not exist. Please check the code on the bus stop pole.
+        </p>
+      </section>
+    );
+  }
+
   if (status === 'empty') {
     return (
       <section

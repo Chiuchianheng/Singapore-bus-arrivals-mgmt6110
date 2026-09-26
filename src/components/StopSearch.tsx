@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookmarkPlus, Check } from 'lucide-react';
 import { BusStopRecord } from '../types';
-import { fetchBusStops } from '../services/ltaApi';
+import { fetchBusStops, ArrivalFetchStatus, ArrivalFetchResult } from '../services/ltaApi';
 
 interface StopSearchProps {
   currentStopCode: string;
+  currentStatus?: ArrivalFetchStatus;
   savedStops: string[];
-  onLoadStop: (code: string) => void;
+  onLoadStop: (code: string) => Promise<ArrivalFetchResult | null> | void;
   onAddCurrentStop: (code: string) => void;
   onEditCurrentStopLabel?: (code: string) => void;
   isCurrentStopSaved?: boolean;
@@ -14,6 +15,7 @@ interface StopSearchProps {
 
 export const StopSearch: React.FC<StopSearchProps> = ({
   currentStopCode,
+  currentStatus,
   savedStops = [],
   onLoadStop,
   onAddCurrentStop,
@@ -47,6 +49,8 @@ export const StopSearch: React.FC<StopSearchProps> = ({
   const isFiveDigits = /^\d{5}$/.test(trimmedInput);
   const isBoxCodeSaved = isFiveDigits && savedStops.includes(trimmedInput);
   const showFormatError = trimmedInput.length > 0 && !isFiveDigits;
+  const isAddDisabled =
+    !isFiveDigits || (trimmedInput === currentStopCode && currentStatus === 'not_found');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +60,18 @@ export const StopSearch: React.FC<StopSearchProps> = ({
     onLoadStop(trimmedInput);
   };
 
-  const handleAddStop = () => {
+  const handleAddStop = async () => {
     if (!isFiveDigits) return;
 
     if (trimmedInput !== currentStopCode) {
-      onLoadStop(trimmedInput);
+      const res = await onLoadStop(trimmedInput);
+      if (res && res.status === 'not_found') {
+        return;
+      }
+    } else {
+      if (currentStatus === 'not_found') {
+        return;
+      }
     }
 
     if (savedStops.includes(trimmedInput)) {
@@ -122,7 +133,7 @@ export const StopSearch: React.FC<StopSearchProps> = ({
             id="add-stop-button"
             type="button"
             onClick={handleAddStop}
-            disabled={!isFiveDigits}
+            disabled={isAddDisabled}
             className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
               isBoxCodeSaved
                 ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
@@ -130,7 +141,9 @@ export const StopSearch: React.FC<StopSearchProps> = ({
             }`}
             title={
               !isFiveDigits
-                ? 'Stop codes are five digits.'
+                ? (trimmedInput.length > 0 ? 'Stop codes are five digits.' : 'Enter a 5-digit stop code')
+                : trimmedInput === currentStopCode && currentStatus === 'not_found'
+                ? 'This stop does not exist.'
                 : isBoxCodeSaved
                 ? 'Saved (click to edit label)'
                 : 'Add current stop to saved stops'

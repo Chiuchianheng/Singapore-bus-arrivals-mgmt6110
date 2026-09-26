@@ -115,6 +115,7 @@ export default function App() {
             second: '2-digit',
           }) + ' SGT'
         );
+        return result;
       } finally {
         setIsRefreshing(false);
       }
@@ -148,20 +149,21 @@ export default function App() {
     return () => clearInterval(interval);
   }, [activeTab, currentStopCode, loadStopArrivals]);
 
-  const handleLoadStop = (code: string) => {
+  const handleLoadStop = async (code: string) => {
     const trimmed = code.trim();
     if (!/^\d{5}$/.test(trimmed)) {
       setFetchStatus('refused');
       setStopData(null);
       setErrorMessage('Stop codes are five digits.');
-      return;
+      return null;
     }
     setCurrentStopCode(trimmed);
-    loadStopArrivals(trimmed, 'initial');
+    return await loadStopArrivals(trimmed, 'initial');
   };
 
   const handlePromptAddStop = (code: string) => {
     if (!code) return;
+    if (code === currentStopCode && fetchStatus === 'not_found') return;
     setLabelModal({
       isOpen: true,
       stopCode: code,
@@ -172,6 +174,7 @@ export default function App() {
 
   const handlePromptEditLabel = (code: string) => {
     if (!code) return;
+    if (code === currentStopCode && fetchStatus === 'not_found') return;
     setLabelModal({
       isOpen: true,
       stopCode: code,
@@ -183,6 +186,10 @@ export default function App() {
   const handleSaveLabelModal = (label: string) => {
     const code = labelModal.stopCode;
     if (!code) return;
+    if (code === currentStopCode && fetchStatus === 'not_found') {
+      setLabelModal((prev) => ({ ...prev, isOpen: false }));
+      return;
+    }
     const trimmed = label.trim();
 
     if (!savedStops.includes(code)) {
@@ -275,6 +282,7 @@ export default function App() {
           <div id="tabpanel-stop" role="tabpanel" aria-labelledby="tab-stop">
             <StopSearch
               currentStopCode={currentStopCode}
+              currentStatus={fetchStatus}
               savedStops={savedStops}
               onLoadStop={handleLoadStop}
               onAddCurrentStop={handlePromptAddStop}

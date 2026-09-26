@@ -1,4 +1,6 @@
 // LTA DataMall Bus Arrival Serverless Function
+import { getBusStops } from './stops.js';
+
 export default async function handler(req, res) {
   // Helper to send JSON compatible with Vercel/Express and Node http
   const sendJson = (statusCode, data) => {
@@ -42,6 +44,24 @@ export default async function handler(req, res) {
       error: 'LTA_ACCOUNT_KEY environment variable is not configured',
       variable: 'LTA_ACCOUNT_KEY',
     });
+  }
+
+  // 4. Report a stop as not found only when the LTA stop list has loaded successfully and the code is not in it.
+  // If the stop list cannot be loaded, do not report not found; return arrivals exactly as today.
+  try {
+    const stops = await getBusStops(accountKey);
+    if (Array.isArray(stops) && stops.length > 0) {
+      const stopExists = stops.some((s) => s.BusStopCode === busStopCode);
+      if (!stopExists) {
+        return sendJson(404, {
+          error: 'StopNotFound',
+          message: 'This stop does not exist. Please check the code on the bus stop pole.',
+          stopCode: busStopCode,
+        });
+      }
+    }
+  } catch {
+    // If the stop list cannot be loaded, do not report not found; return arrivals exactly as today.
   }
 
   const upstreamUrl = `https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival?BusStopCode=${encodeURIComponent(busStopCode)}`;

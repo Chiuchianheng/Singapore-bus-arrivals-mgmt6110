@@ -51,6 +51,23 @@ async function fetchAllBusStopsFromLTA(accountKey) {
   return allStops;
 }
 
+export async function getBusStops(accountKey) {
+  if (cachedStops && Array.isArray(cachedStops) && cachedStops.length > 0) {
+    return cachedStops;
+  }
+  if (!fetchPromise) {
+    fetchPromise = fetchAllBusStopsFromLTA(accountKey)
+      .then((stops) => {
+        cachedStops = stops;
+        return stops;
+      })
+      .finally(() => {
+        fetchPromise = null;
+      });
+  }
+  return fetchPromise;
+}
+
 export default async function handler(req, res) {
   const sendJson = (statusCode, data) => {
     res.setHeader('Content-Type', 'application/json');
@@ -72,27 +89,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (!cachedStops) {
-      if (!fetchPromise) {
-        fetchPromise = fetchAllBusStopsFromLTA(accountKey)
-          .then((stops) => {
-            cachedStops = stops;
-            return stops;
-          })
-          .finally(() => {
-            fetchPromise = null;
-          });
-      }
-      await fetchPromise;
-    }
+    const stops = await getBusStops(accountKey);
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=86400');
     if (typeof res.status === 'function' && typeof res.json === 'function') {
-      return res.status(200).json(cachedStops || []);
+      return res.status(200).json(stops || []);
     }
     res.statusCode = 200;
-    res.end(JSON.stringify(cachedStops || []));
+    res.end(JSON.stringify(stops || []));
   } catch (err) {
     console.error('Error fetching stops from LTA DataMall:', err);
     fetchPromise = null;
