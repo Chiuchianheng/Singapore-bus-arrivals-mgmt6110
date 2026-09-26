@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Pencil } from 'lucide-react';
+import { BusStopRecord } from '../types';
 
 interface SavedStopsProps {
   savedStops: string[];
   savedLabels?: Record<string, string>;
+  stopsCatalog?: Record<string, BusStopRecord>;
   activeStopCode: string;
   onSelectStop: (code: string) => void;
   onRemoveStop: (code: string) => void;
@@ -15,6 +17,7 @@ interface SavedStopsProps {
 export const SavedStops: React.FC<SavedStopsProps> = ({
   savedStops,
   savedLabels = {},
+  stopsCatalog = {},
   activeStopCode,
   onSelectStop,
   onRemoveStop,
@@ -76,6 +79,9 @@ export const SavedStops: React.FC<SavedStopsProps> = ({
             const isActive = stopCode === activeStopCode;
             const rawLabel = savedLabels[stopCode];
             const label = rawLabel && rawLabel.trim() ? rawLabel.trim() : null;
+            const stopRecord = stopsCatalog[stopCode];
+            const stopName = stopRecord?.Description?.trim() || null;
+            const primaryText = label || stopName;
 
             return (
               <div
@@ -93,14 +99,15 @@ export const SavedStops: React.FC<SavedStopsProps> = ({
                   onClick={() => onSelectStop(stopCode)}
                   className="px-3 py-1.5 text-left cursor-pointer flex items-center min-h-[44px]"
                 >
-                  {label ? (
-                    <div className="flex flex-col leading-tight py-0.5">
+                  {primaryText ? (
+                    <div className="flex flex-col leading-tight py-0.5 max-w-[200px] sm:max-w-xs">
                       <span
-                        className={`text-sm font-bold ${
+                        className={`text-sm font-bold truncate ${
                           isActive ? 'text-blue-950' : 'text-slate-900'
                         }`}
+                        title={primaryText}
                       >
-                        {label}
+                        {primaryText}
                       </span>
                       <span
                         className={`text-[11px] font-medium ${

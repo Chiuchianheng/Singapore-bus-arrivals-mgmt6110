@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BusArrival, BusStopData } from '../types';
+import { BusArrival, BusStopData, BusStopRecord } from '../types';
 import { formatLoadText, getSeatPillClasses } from '../utils/formatters';
 import {
   fetchStopArrivals,
@@ -10,6 +10,7 @@ import {
 interface MyStopsViewProps {
   savedStops: string[];
   savedLabels?: Record<string, string>;
+  stopsCatalog?: Record<string, BusStopRecord>;
   onSelectStop: (stopCode: string) => void;
   refreshTrigger?: number;
 }
@@ -31,6 +32,7 @@ interface SavedStopState {
 export const MyStopsView: React.FC<MyStopsViewProps> = ({
   savedStops,
   savedLabels = {},
+  stopsCatalog = {},
   onSelectStop,
   refreshTrigger = 0,
 }) => {
@@ -183,7 +185,7 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
     <div className="my-4">
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[110px_1fr] items-center px-3.5 sm:px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-400 uppercase tracking-wider gap-3 sm:gap-4">
+        <div className="grid grid-cols-[105px_1fr] sm:grid-cols-[160px_1fr] items-center px-3.5 sm:px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-400 uppercase tracking-wider gap-3 sm:gap-4">
           <div>STOP</div>
           <div>NEXT 3 SERVICES</div>
         </div>
@@ -193,6 +195,9 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
           {rows.map(({ stopCode, status, topServices, errorMessage }) => {
             const rawLabel = savedLabels[stopCode];
             const label = rawLabel && rawLabel.trim() ? rawLabel.trim() : null;
+            const stopRecord = stopsCatalog[stopCode];
+            const stopName = stopRecord?.Description?.trim() || null;
+            const primaryText = label || stopName;
 
             return (
               <div
@@ -207,17 +212,17 @@ export const MyStopsView: React.FC<MyStopsViewProps> = ({
                     onSelectStop(stopCode);
                   }
                 }}
-                className="grid grid-cols-[80px_1fr] sm:grid-cols-[110px_1fr] items-center px-3.5 sm:px-4 py-3 gap-3 sm:gap-4 cursor-pointer transition-colors hover:bg-slate-50/80 active:bg-slate-100 focus:outline-hidden focus-visible:bg-slate-50"
+                className="grid grid-cols-[105px_1fr] sm:grid-cols-[160px_1fr] items-center px-3.5 sm:px-4 py-3 gap-3 sm:gap-4 cursor-pointer transition-colors hover:bg-slate-50/80 active:bg-slate-100 focus:outline-hidden focus-visible:bg-slate-50"
               >
                 {/* Left: Stop label + code */}
                 <div className="min-w-0">
-                  {label ? (
+                  {primaryText ? (
                     <>
                       <div
                         className="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate"
-                        title={label}
+                        title={primaryText}
                       >
-                        {label}
+                        {primaryText}
                       </div>
                       <div className="text-[11px] sm:text-xs font-medium text-slate-500 leading-tight truncate mt-0.5">
                         Stop {stopCode}

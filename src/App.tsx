@@ -7,8 +7,8 @@ import { MyStopsView } from './components/MyStopsView';
 import { StopLabelModal } from './components/StopLabelModal';
 import { DisqusComments } from './components/DisqusComments';
 import { Footer } from './components/Footer';
-import { BusStopData } from './types';
-import { fetchStopArrivals, ArrivalFetchStatus } from './services/ltaApi';
+import { BusStopData, BusStopRecord } from './types';
+import { fetchStopArrivals, fetchBusStops, ArrivalFetchStatus } from './services/ltaApi';
 
 const STORAGE_KEY = 'sg_commuter_saved_stops';
 const LABELS_STORAGE_KEY = 'sg_commuter_saved_stop_labels';
@@ -67,6 +67,20 @@ export default function App() {
     isEditing: false,
     initialLabel: '',
   });
+
+  const [stopsCatalog, setStopsCatalog] = useState<Record<string, BusStopRecord>>({});
+
+  useEffect(() => {
+    fetchBusStops().then((res) => {
+      if (res.isAvailable && res.stops.length > 0) {
+        const map: Record<string, BusStopRecord> = {};
+        for (const stop of res.stops) {
+          map[stop.BusStopCode] = stop;
+        }
+        setStopsCatalog(map);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     try {
@@ -330,6 +344,7 @@ export default function App() {
             <SavedStops
               savedStops={savedStops}
               savedLabels={savedLabels}
+              stopsCatalog={stopsCatalog}
               activeStopCode={currentStopCode}
               onSelectStop={handleLoadStop}
               onRemoveStop={handleRemoveStop}
@@ -343,6 +358,8 @@ export default function App() {
               status={fetchStatus}
               stopData={stopData}
               errorMessage={errorMessage}
+              stopRecord={stopsCatalog[currentStopCode] || null}
+              label={savedLabels[currentStopCode] || null}
             />
           </div>
         ) : (
@@ -351,6 +368,7 @@ export default function App() {
             <MyStopsView
               savedStops={savedStops}
               savedLabels={savedLabels}
+              stopsCatalog={stopsCatalog}
               onSelectStop={handleSelectFromMyStops}
               refreshTrigger={refreshTrigger}
             />
