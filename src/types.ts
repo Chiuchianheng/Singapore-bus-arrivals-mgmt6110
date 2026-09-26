@@ -19,3 +19,9 @@ export interface BusStopData {
   stopCode: string;
   services: BusService[];
 }
+
+export interface BusStopRecord {
+  BusStopCode: string;
+  RoadName: string;
+  Description: string;
+}

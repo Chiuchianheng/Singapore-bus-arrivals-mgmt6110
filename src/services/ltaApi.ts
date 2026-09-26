@@ -1,4 +1,4 @@
-import { BusStopData } from '../types';
+import { BusStopData, BusStopRecord } from '../types';
 
 export type ArrivalFetchStatus = 'loading' | 'empty' | 'refused' | 'unreachable' | 'success';
 
@@ -97,3 +97,61 @@ export async function fetchStopArrivals(stopCode: string): Promise<ArrivalFetchR
     };
   }
 }
+
+let cachedBusStopsResult: BusStopsFetchResult | null = null;
+let busStopsPromise: Promise<BusStopsFetchResult> | null = null;
+
+export interface BusStopsFetchResult {
+  stops: BusStopRecord[];
+  isAvailable: boolean;
+  errorMessage?: string;
+}
+
+export async function fetchBusStops(): Promise<BusStopsFetchResult> {
+  if (cachedBusStopsResult && cachedBusStopsResult.isAvailable) {
+    return cachedBusStopsResult;
+  }
+  if (busStopsPromise) {
+    return busStopsPromise;
+  }
+
+  busStopsPromise = (async () => {
+    try {
+      const res = await fetch('/api/stops', { cache: 'no-store' });
+      if (!res.ok) {
+        return {
+          stops: [],
+          isAvailable: false,
+          errorMessage:
+            'Stop search is not available right now. You can still enter a 5-digit stop code above.',
+        };
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        cachedBusStopsResult = {
+          stops: data,
+          isAvailable: true,
+        };
+        return cachedBusStopsResult;
+      }
+      return {
+        stops: [],
+        isAvailable: false,
+        errorMessage:
+          'Stop search is not available right now. You can still enter a 5-digit stop code above.',
+      };
+    } catch {
+      return {
+        stops: [],
+        isAvailable: false,
+        errorMessage:
+          'Stop search is not available right now. You can still enter a 5-digit stop code above.',
+      };
+    } finally {
+      busStopsPromise = null;
+    }
+  })();
+
+  return busStopsPromise;
+}
+
