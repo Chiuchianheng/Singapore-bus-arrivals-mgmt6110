@@ -164,3 +164,59 @@ export async function fetchBusStops(): Promise<BusStopsFetchResult> {
   return busStopsPromise;
 }
 
+export interface BusRouteFetchResult {
+  serviceNo: string;
+  directionDetermined: boolean;
+  stops: string[] | null;
+  isAvailable: boolean;
+}
+
+const routeCache = new Map<string, Promise<BusRouteFetchResult>>();
+
+export async function fetchBusRoute(
+  serviceNo: string,
+  stopCode: string,
+  destinationCode: string
+): Promise<BusRouteFetchResult> {
+  const cacheKey = `${serviceNo}_${stopCode}_${destinationCode}`;
+  if (routeCache.has(cacheKey)) {
+    return routeCache.get(cacheKey)!;
+  }
+
+  const promise = (async () => {
+    try {
+      const params = new URLSearchParams({
+        ServiceNo: serviceNo,
+        StopCode: stopCode,
+        DestinationCode: destinationCode,
+      });
+      const res = await fetch(`/api/routes?${params.toString()}`);
+      if (!res.ok) {
+        return {
+          serviceNo,
+          directionDetermined: false,
+          stops: null,
+          isAvailable: false,
+        };
+      }
+      const data = await res.json();
+      return {
+        serviceNo,
+        directionDetermined: Boolean(data.directionDetermined),
+        stops: Array.isArray(data.stops) ? data.stops : null,
+        isAvailable: true,
+      };
+    } catch {
+      return {
+        serviceNo,
+        directionDetermined: false,
+        stops: null,
+        isAvailable: false,
+      };
+    }
+  })();
+
+  routeCache.set(cacheKey, promise);
+  return promise;
+}
+

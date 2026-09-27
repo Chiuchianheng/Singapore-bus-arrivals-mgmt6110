@@ -128,12 +128,18 @@ export default async function handler(req, res) {
       // Monitored: 1 when GPS tracked, 0 when timetable schedule estimate
       const tracked = Number(rawBus.Monitored) === 1;
 
+      // DestinationCode: 5-digit bus stop code where the bus terminates
+      const destinationCode = rawBus.DestinationCode
+        ? String(rawBus.DestinationCode).padStart(5, '0')
+        : '';
+
       return {
         estimatedMinutes,
         load,
         type,
         feature,
         tracked,
+        destinationCode,
       };
     };
 
@@ -150,8 +156,15 @@ export default async function handler(req, res) {
       const bus2 = parseBus(raw.NextBus2);
       if (bus2) buses.push(bus2);
 
+      const destinationCode =
+        (bus1 && bus1.destinationCode) ||
+        (bus2 && bus2.destinationCode) ||
+        (raw.NextBus && raw.NextBus.DestinationCode ? String(raw.NextBus.DestinationCode).padStart(5, '0') : '') ||
+        '';
+
       services.push({
         serviceNo,
+        destinationCode,
         buses,
       });
     }

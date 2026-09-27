@@ -11,6 +11,7 @@ interface ServiceArrivalsListProps {
   errorMessage?: string;
   stopRecord?: BusStopRecord | null;
   label?: string | null;
+  stopsCatalog?: Record<string, BusStopRecord>;
 }
 
 export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
@@ -20,6 +21,7 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
   errorMessage,
   stopRecord,
   label,
+  stopsCatalog = {},
 }) => {
   const renderLoadedStopHeader = () => (
     <div
@@ -186,7 +188,12 @@ export const ServiceArrivalsList: React.FC<ServiceArrivalsListProps> = ({
         {/* Table Body Rows */}
         <div className="divide-y divide-slate-100">
           {sortedServices.map((service) => (
-            <ServiceRow key={service.serviceNo} service={service} />
+            <ServiceRow
+              key={service.serviceNo}
+              service={service}
+              currentStopCode={stopCode}
+              stopsCatalog={stopsCatalog}
+            />
           ))}
         </div>
       </div>

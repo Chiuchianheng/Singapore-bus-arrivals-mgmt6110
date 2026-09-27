@@ -5,6 +5,7 @@ import {defineConfig, Plugin} from 'vite';
 import arrivalsHandler from './api/arrivals.js';
 import healthHandler from './api/health.js';
 import stopsHandler from './api/stops.js';
+import routesHandler from './api/routes.js';
 
 function apiDevMiddleware(): Plugin {
   return {
@@ -24,6 +25,10 @@ function apiDevMiddleware(): Plugin {
           }
           if (url.pathname === '/api/stops') {
             await stopsHandler(req, res);
+            return;
+          }
+          if (url.pathname === '/api/routes') {
+            await routesHandler(req, res);
             return;
           }
         } catch (err) {

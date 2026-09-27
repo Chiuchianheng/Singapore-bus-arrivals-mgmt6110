@@ -479,6 +479,7 @@ export default function App() {
               errorMessage={errorMessage}
               stopRecord={stopsCatalog[currentStopCode] || null}
               label={savedLabels[currentStopCode] || null}
+              stopsCatalog={stopsCatalog}
             />
           </div>
         ) : (
