@@ -61,6 +61,7 @@ export const ServiceRow: React.FC<ServiceRowProps> = ({
   stopsCatalog,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [showAllStops, setShowAllStops] = useState<boolean>(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState<boolean>(false);
   const [routeStops, setRouteStops] = useState<string[] | null>(null);
   const [directionDetermined, setDirectionDetermined] = useState<boolean>(true);
@@ -156,12 +157,58 @@ export const ServiceRow: React.FC<ServiceRowProps> = ({
       );
     }
 
-    // "It lists the next 4 stops after the current stop, then '… [N] more stops', then the last stop in bold, using stop names from /api/stops."
+    // "It lists the next 4 stops after the current stop, then '… [N] more stops' as a button 'Show all [total] stops', then the last stop in bold, using stop names from /api/stops.
+    // Tapping it shows every remaining stop in order, in an area of limited height that scrolls on its own, with the last stop still in bold at the end, and a 'Show fewer' button that returns to the short list."
     const totalUpcoming = upcomingStops.length;
     const firstFour = upcomingStops.slice(0, 4);
     const lastStopCode = upcomingStops[totalUpcoming - 1];
     const moreCount = totalUpcoming > 5 ? totalUpcoming - 5 : 0;
     const showLastStopSeparately = totalUpcoming > 4;
+
+    if (showAllStops) {
+      return (
+        <div className="py-2.5 px-3 text-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-slate-700">Next stops ({totalUpcoming}):</div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAllStops(false);
+              }}
+              className="text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer text-[11px]"
+            >
+              Show fewer
+            </button>
+          </div>
+          <div className="max-h-56 overflow-y-auto pr-1 rounded border border-slate-200/70 bg-white/70 p-2">
+            <ol className="space-y-1 list-none">
+              {upcomingStops.map((stopCode, idx) => {
+                const isLast = idx === totalUpcoming - 1;
+                const record = stopsCatalog[stopCode];
+                const name = record ? record.Description : `Stop ${stopCode}`;
+                return (
+                  <li
+                    key={`${stopCode}-${idx}`}
+                    className={`flex items-center gap-1.5 ${
+                      isLast ? 'text-slate-900 font-bold pt-1 border-t border-slate-100' : 'text-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isLast ? 'bg-blue-600' : 'bg-slate-300'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{name}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="py-2.5 px-3 text-xs space-y-1.5">
@@ -179,8 +226,17 @@ export const ServiceRow: React.FC<ServiceRowProps> = ({
           })}
 
           {moreCount > 0 && (
-            <li className="text-slate-400 pl-3 italic py-0.5">
-              … {moreCount} more {moreCount === 1 ? 'stop' : 'stops'}
+            <li className="pl-3 py-0.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllStops(true);
+                }}
+                className="text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer text-left"
+              >
+                Show all {totalUpcoming} stops
+              </button>
             </li>
           )}
 
